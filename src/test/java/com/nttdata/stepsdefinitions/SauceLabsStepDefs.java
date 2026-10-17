@@ -5,22 +5,13 @@ import com.nttdata.support.ScreenshotAttacher;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
 import io.cucumber.java.en.And;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import io.cucumber.java.es.*;
+import org.junit.Assert;
+import com.nttdata.screens.AppConfigScreen;
 
-import static org.junit.Assert.assertTrue;
-
-/**
- * Step definitions especificos del login de Sauce Labs.
- * <p>
- * NO contiene el step "Given ingreso al aplicativo...": ese step es
- * generico y vive en {@link AppConfigStepsDefs}, reutilizable para
- * cualquier app.
- */
 public class SauceLabsStepDefs {
 
     private final SauceLabsLoginSteps sauceLabsLoginSteps = new SauceLabsLoginSteps();
-
     private Scenario scenario;
 
     @Before
@@ -28,27 +19,30 @@ public class SauceLabsStepDefs {
         this.scenario = scenario;
     }
 
-    @When("ingreso el usuario {string}")
-    public void ingreso_el_usuario(String usuario) {
-        sauceLabsLoginSteps.ingresarUsuario(usuario);
+    @Dado("estoy en la aplicación de SauceLabs")
+    public void estoyEnLaAplicacionDeSauceLabs() {
+
+        new AppConfigScreen().iniciarAplicacion("saucelabs");
+        System.out.println("[SauceLabsStepDefs] Aplicación iniciada correctamente.");
     }
 
-    @And("ingreso la clave {string}")
-    public void ingreso_la_clave(String clave) {
-        sauceLabsLoginSteps.ingresarClave(clave);
+    @Y("valido que carguen correctamente los productos en la galeria")
+    public void validoQueCarguenCorrectamenteLosProductosEnLaGaleria() {
+        sauceLabsLoginSteps.validarGaleriaProductos();
+        ScreenshotAttacher.attach(scenario, "Galeria de Productos");
     }
 
-    @And("hago clic en LOGIN")
-    public void hago_clic_en_login() {
-        sauceLabsLoginSteps.clicEnLogin();
-        ScreenshotAttacher.attach(scenario, "Despues de hacer login");
+    @Cuando("agrego {int} del siguiente producto {string}")
+    public void agregoUNIDADESDelSiguienteProducto(int unidades, String producto) {
+        sauceLabsLoginSteps.seleccionarProducto(producto);
+        sauceLabsLoginSteps.agregarUnidades(unidades);
+        ScreenshotAttacher.attach(scenario, "Producto Agregado");
     }
 
-    @Then("valido el login OK")
-    public void valido_el_login_ok() {
-        assertTrue(
-                "No se encontro la pantalla de productos: el login no fue exitoso",
-                sauceLabsLoginSteps.loginFueExitoso()
-        );
+    @Entonces("valido el carrito de compra actualice correctamente")
+    public void validoElCarritoDeCompraActualiceCorrectamente() {
+        boolean resultado = sauceLabsLoginSteps.validarCarrito();
+        Assert.assertTrue("El carrito no se actualizo correctamente", resultado);
+        ScreenshotAttacher.attach(scenario, "Carrito Actualizado");
     }
 }

@@ -6,81 +6,62 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
 import java.time.Duration;
 
 import static com.nttdata.screens.AppConfigScreen.getDriver;
 
-/**
- * SauceLabsLoginScreen
- * ---------------------
- * Pantalla de login de la app movil de Sauce Labs.
- * <p>
- * Su UNICA responsabilidad es interactuar con los elementos de esta
- * pantalla (escribir usuario/clave, hacer clic en LOGIN, verificar que
- * el login fue exitoso).
- * <p>
- * NO levanta ni cierra la aplicacion: eso es responsabilidad exclusiva
- * de {@link AppConfigScreen}. Esta clase solo pide el driver de la
- * sesion ya activa mediante {@code AppConfigScreen.getDriver()}.
- */
+
 public class SauceLabsLoginScreen {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(20);
 
-    private final By txtUsuario =
-            AppiumBy.xpath("//android.widget.EditText[@content-desc=\"test-Username\"]");
+    // Localizadores de la aplicación My Demo App
+    private final By tituloCatalogo = AppiumBy.accessibilityId("test-Catalog");
+    private final By btnPlus = AppiumBy.accessibilityId("test-Increase item quantity");
+    private final By btnAddToCart = AppiumBy.accessibilityId("test-Add To Cart");
+    private final By badgeCarrito = AppiumBy.accessibilityId("test-Cart number");
 
-    private final By txtClave =
-            AppiumBy.xpath("//android.widget.EditText[@content-desc=\"test-Password\"]");
-
-    private final By btnLogin =
-            AppiumBy.accessibilityId("test-LOGIN");
-
-    // Elemento que solo existe en la pantalla de productos, tras un login exitoso
-    private final By tituloProductos =
-            AppiumBy.accessibilityId("test-PRODUCTS");
-
-    public void escribirUsuario(String usuario) {
-        System.out.println("[SauceLabsLoginScreen] Escribiendo usuario: " + usuario);
-
+    public void validarGaleria() {
         AndroidDriver driver = getDriver();
         WebDriverWait wait = new WebDriverWait(driver, TIMEOUT);
-
-        WebElement campoUsuario = wait.until(ExpectedConditions.presenceOfElementLocated(txtUsuario));
-        campoUsuario.sendKeys(usuario);
+        WebElement catalogo = wait.until(ExpectedConditions.presenceOfElementLocated(tituloCatalogo));
+        System.out.println("[SauceLabsLoginScreen] Galería de productos visible: " + catalogo.isDisplayed());
     }
 
-    public void escribirClave(String clave) {
-        System.out.println("[SauceLabsLoginScreen] Escribiendo clave...");
-
+    public void seleccionarProducto(String producto) {
         AndroidDriver driver = getDriver();
         WebDriverWait wait = new WebDriverWait(driver, TIMEOUT);
 
-        WebElement campoClave = wait.until(ExpectedConditions.presenceOfElementLocated(txtClave));
-        campoClave.sendKeys(clave);
+        // Declaración del localizador dinámico
+        By lblProducto = By.xpath("//android.widget.TextView[@text='" + producto + "']");
+
+        WebElement elProducto = wait.until(ExpectedConditions.elementToBeClickable(lblProducto));
+        elProducto.click();
+        System.out.println("[SauceLabsLoginScreen] Producto seleccionado: " + producto);
     }
 
-    public void clicEnLogin() {
-        System.out.println("[SauceLabsLoginScreen] Haciendo clic en el boton LOGIN");
-
+    public void agregarUnidades(int unidades) {
         AndroidDriver driver = getDriver();
         WebDriverWait wait = new WebDriverWait(driver, TIMEOUT);
 
-        WebElement botonLogin = wait.until(ExpectedConditions.presenceOfElementLocated(btnLogin));
-        botonLogin.click();
+        // Si se requieren más de 1 unidad, aumentamos con el botón '+'
+        for (int i = 1; i < unidades; i++) {
+            WebElement masBtn = wait.until(ExpectedConditions.elementToBeClickable(btnPlus));
+            masBtn.click();
+        }
+
+        // Hacemos clic en Agregar al Carrito
+        WebElement addBtn = wait.until(ExpectedConditions.elementToBeClickable(btnAddToCart));
+        addBtn.click();
+        System.out.println("[SauceLabsLoginScreen] Se agregaron " + unidades + " unidades al carrito.");
     }
 
-    public boolean estaEnPantallaDeProductos() {
-        System.out.println("[SauceLabsLoginScreen] Validando que se llego a la pantalla de productos...");
-
+    public boolean validarCarritoActualizado() {
         AndroidDriver driver = getDriver();
         WebDriverWait wait = new WebDriverWait(driver, TIMEOUT);
-
-        WebElement titulo = wait.until(ExpectedConditions.presenceOfElementLocated(tituloProductos));
-        boolean visible = titulo.isDisplayed();
-
-        System.out.println("[SauceLabsLoginScreen] Pantalla de productos visible: " + visible);
-        return visible;
+        WebElement badge = wait.until(ExpectedConditions.presenceOfElementLocated(badgeCarrito));
+        String cantidad = badge.getText();
+        System.out.println("[SauceLabsLoginScreen] Cantidad detectada en el carrito: " + cantidad);
+        return !cantidad.isEmpty() && Integer.parseInt(cantidad) > 0;
     }
 }
